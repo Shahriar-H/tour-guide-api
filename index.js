@@ -3,6 +3,7 @@ const cors = require("cors");
 const connection = require("./config");
 const { ObjectId } = require("mongodb");
 const { v2:cloudinary } = require('cloudinary');
+const { emailsender } = require("./send_email");
 
 // Configuration
 cloudinary.config({ 
@@ -22,16 +23,18 @@ app.use(express.urlencoded({ extended: true }));
 
 // Functions
 
-const isFoundDuplicate = async ({table,query})=>{
+const isFoundDuplicate = async ({ table, query }) => {
     const db = await connection();
-    const result = await db.collection(table).findOne(query);
-    if(result?.length>0){
-        //already exist
-        return true
+    const result = await db.collection(table).find(query).toArray();
+    // console.log(result, table, query);
+    
+    if (result?.length > 0) {
+        // already exist
+        return true;
     }
-    //not found duplocate email or phone
+    // not found duplicate email or phone
     return false;
-}
+};
 //functions
 
 app.get("/",(req,res)=>{
@@ -41,26 +44,31 @@ app.get("/",(req,res)=>{
 })
 
 
-app.post("/insert-item",async (req,res)=>{
-
+app.post("/insert-item", async (req, res) => {
     try {
-        const {data,table} = req?.body
-        if(table==='users'){
-            if(isFoundDuplicate({query:{email:data?.email,phone:data?.phone},table})){
-                return res.send({status:203,message:"Email or Phone Already Exist"})
+        const { data, table } = req?.body;
+        if (table === 'users') {
+            // Await the isFoundDuplicate function
+            const isDuplicate = await isFoundDuplicate({ query: {
+                $or: [
+                    { email: data?.email },
+                    { phone: data?.phone }
+                ]
+            }, table });
+
+            if (isDuplicate) {
+                return res.send({ status: 203, message: "Email or Phone Already Exist" });
             }
         }
-        const db = await connection()
-        const result = await db.collection(table).insertOne({...data, created_at:new Date().getTime()});
 
-        res.send({status:200,result,message:"Success!"})
+        const db = await connection();
+        const result = await db.collection(table).insertOne({ ...data, created_at: new Date().getTime() });
 
+        res.send({ status: 200, result, message: "Success!" });
     } catch (error) {
-        res.send({status:500,error,message:"Not Inserted!"})
+        res.send({ status: 500, error, message: "Not Inserted!" });
     }
-    
-
-})
+});
 
 
 app.post("/get-item",async (req,res)=>{
@@ -84,12 +92,19 @@ app.post("/delete-item",async (req,res)=>{
     try {
         const {table,query} = req?.body
         const db = await connection()
-        const result = await db.collection(table).deleteMany(query);
-
+        let myQuery = query;
+        if(query?.id){
+            const theid = new ObjectId(query?.id)
+            delete query['id']
+            myQuery={...query,_id:theid}
+        }
+        const result = await db.collection(table).deleteOne(myQuery);
+        console.log(result,myQuery);
+        
         res.send({status:200,result,message:"Success!"})
 
     } catch (error) {
-        res.send({status:500,error,message:"Not Fetched!"})
+        res.send({status:500,error,message:"Not Deleted!"})
     }
     
 })
@@ -169,6 +184,18 @@ app.post("/upload-image",async (req,res)=>{
     // }
     
 
+})
+
+app.post("/sendemail",async (req,res)=>{
+    const data = req?.body
+   
+    //{email,message,subject}
+    emailsender(data).catch((err)=>{
+        console.log(err);
+        
+        return res.send({status:500,error:err})
+    })
+    return res.send({status:200})
 })
 
 
