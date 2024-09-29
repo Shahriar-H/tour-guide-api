@@ -76,7 +76,13 @@ app.post("/get-item",async (req,res)=>{
     try {
         const {table,query} = req?.body
         const db = await connection()
-        const result = await db.collection(table).find(query).sort({"_id": -1}).toArray()
+        let myQuery = query;
+        if(query?.id){
+            const theid = new ObjectId(query?.id)
+            delete query['id']
+            myQuery={...query,_id:theid}
+        }
+        const result = await db.collection(table).find(myQuery).sort({"_id": -1}).toArray()
 
         return res.send({status:200,result,message:"Success!"})
 
