@@ -196,12 +196,18 @@ app.post("/sendemail",async (req,res)=>{
     const data = req?.body
    
     //{email,message,subject}
-    emailsender(data).catch((err)=>{
+    emailsender(data)
+    .then((res)=>{
+        // return res.send({status:200,res})
+        console.log(res);
+    })
+    .catch((err)=>{
         console.log(err);
+        // return res.send({status:500,err})
         
-        return res.send({status:500,error:err})
     })
     return res.send({status:200})
+    
 })
 
 
