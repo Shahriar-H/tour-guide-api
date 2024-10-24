@@ -7,8 +7,8 @@ const emailsender = async (details) => {
   let transporter = nodemailer.createTransport({
     service: "gmail", // Use Gmail service
     auth: {
-      user: 'noreply.villagetourbd@gmail.com', // Your Gmail address
-      pass: 'sjre uruj dbbt fsfa ', // Your Gmail app password (not your regular password)
+      user: '*****', // Your Gmail address
+      pass: '*******', // Your Gmail app password (not your regular password)
     },
   });
 
