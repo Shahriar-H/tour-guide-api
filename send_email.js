@@ -13,8 +13,8 @@ const emailsender=async (details)=>{
     port: 465,
     secure: true, // true for 465, false for other ports
     auth: {
-      user: 'tourbd@zas71.com', // generated ethereal user
-      pass: 'tourbd2024', // generated ethereal password
+      user: '11111@gmail.com', // generated ethereal user
+      pass: '11111111', // generated ethereal password
     },
   });
 
